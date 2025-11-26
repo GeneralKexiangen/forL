@@ -496,7 +496,8 @@ else:
 # 固定页脚
 st.markdown(
     '<div class="fixed-footer">'
-    '基于剑桥词典的翻译工具 | 数据来源: dictionary.cambridge.org'
+    '数据来源: dictionary.cambridge.org'
     '</div>',
     unsafe_allow_html=True
 )
+
