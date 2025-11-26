@@ -52,7 +52,7 @@ body {
     border: 1px solid #e9ecef;
 }
 .example-box {
-    background:#f1f3f4; 
+    # background:#f1f3f4; 
     padding:0.4rem 0.8rem; 
     border-radius:5px; 
     margin:0.3rem 0; 
@@ -508,3 +508,4 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
+
