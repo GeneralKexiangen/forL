@@ -433,7 +433,7 @@ class CambridgeTranslator:
         result["url"] = cambridge_url
         return result
 
-    def translate(self, word: str, max_definitions: int = 5, include_audio: bool = True) -> Dict:
+    def translate(self, word: str, max_definitions: int = 50, include_audio: bool = True) -> Dict:
         """
         翻译英文单词或短语
 
