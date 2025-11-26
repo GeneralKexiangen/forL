@@ -5,9 +5,9 @@ import os
 
 # 页面配置 - 设置默认主题为light并隐藏设置
 st.set_page_config(
-    page_title="翻译器",
+    page_title="单词王",
     page_icon="📚",
-    layout="centered",  # 改为wide布局让整体变宽
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -27,19 +27,22 @@ body {
     font-family: 'Arial', sans-serif;
     background-color: #ffffff;
     color: #262730;
+    position: relative;
+    min-height: 100vh;
 }
 .main-header {
-    font-size:3.0rem; 
+    font-size:2.5rem; 
     color: rgb(40, 100, 245);
     text-align:center; 
-    margin-bottom:1.5rem;
+    margin-bottom:1rem;
     font-weight: bold;
 }
 .sub-header {
-    font-size:1.4rem; 
+    font-size:1.8rem; 
     color: rgb(40, 100, 245);
-    margin:1rem 0 0.5rem 0;
-    font-weight: 600;
+    margin:2rem 0 1rem 0;
+    font-weight: 500;
+    text-align: left    ;
 }
 .definition-box {
     background:#f8f9fa; 
@@ -62,17 +65,6 @@ body {
     margin:0.5rem 0;
     font-family: 'Courier New', monospace;
 }
-.audio-section {
-    margin:0.5rem 0;
-}
-.history-box {
-    background:#e3f2fd; 
-    padding:0.5rem; 
-    border-radius:8px; 
-    margin-bottom:0.3rem; 
-    cursor:pointer;
-    border: 1px solid #bbdefb;
-}
 .error-box {
     background:#ffebee; 
     padding:0.8rem; 
@@ -80,123 +72,197 @@ body {
     border-left:4px solid #f44336;
 }
 
-/* 优化输入框样式 */
+/* 优化输入框样式 - 细边框，无点击背景色 */
+.stTextInput {
+    width: 100% !important;
+}
+
 .stTextInput input {
-    background-color: #f8f9fa;
-    border: 3px solid #dee2e6;
+    # background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 10px;
     padding: 14px;
     font-size: 18px;
+    width: 100% !important;
+    transition: border-color 0.3s ease;
 }
 
 .stTextInput input:focus {
-    border-color: rgb(40, 100, 245);
-    box-shadow: 0 0 0 3px rgba(40, 100, 245, 0.2);
+    # border-color: rgb(40, 100, 245);
+    box-shadow: 0 0 0 2px rgba(40, 100, 245, 0.1);
+    # background-color: #f8f9fa !important;
 }
 
-/* 优化按钮样式 - 修改点击后的背景颜色 */
-.stButton button {
-    background-color: #1f77b4;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-weight: 600;
+/* 输入框和按钮容器 */
+.input-with-button {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.input-container {
+    flex: 1;
+}
+
+.history-button-container {
+    margin-top: 0;
+}
+
+/* 历史按钮样式 - 小图标按钮 */
+.history-icon-button {
+    background-color: #6c757d !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
+    font-size: 18px !important;
+    min-width: 50px !important;
+    height: 52px !important;
+    transition: all 0.3s ease !important;
+}
+
+.history-icon-button:hover {
+    background-color: #545b62 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* 历史记录页面样式 */
+.history-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.history-item-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid #e9ecef;
     transition: all 0.3s ease;
-    font-size: 16px;
+    cursor: pointer;
 }
 
-.stButton button:hover {
-    background-color: rgb(40, 100, 245);
+.history-item-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: rgb(40, 100, 245);
 }
 
-.stButton button:active,
-.stButton button:focus {
-    background-color: rgb(40, 100, 245) !important;
-    border-color: rgb(40, 100, 245) !important;
-}
-
-/* 侧边栏样式优化 */
-.css-1d391kg {
-    background-color: #f8f9fa;
-}
-
-/* 隐藏Streamlit的默认装饰元素 */
-.stDeployButton {
-    display: none;
-}
-
-/* 优化标签显示 */
-.st-emotion-cache-1q7spjk {
-    font-weight: 600;
+.history-word {
+    font-size: 1.5rem;
+    font-weight: bold;
     color: rgb(40, 100, 245);
+    margin-bottom: 0.5rem;
+}
+
+.history-pronunciation {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+}
+
+.history-translation {
+    color: #495057;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.history-examples {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px dashed #dee2e6;
+}
+
+.history-example {
+    font-style: italic;
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin: 0.3rem 0;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.history-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
 }
 
 /* 调整主内容区域宽度 */
 .main .block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-top: 1.5rem;
+    padding-bottom: 4rem;
     padding-left: 3rem;
     padding-right: 3rem;
     max-width: 1200px;
 }
 
-/* 使用示例区域去掉边框 */
-div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="column"]) {
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
+/* 发音区域样式 */
+.pronunciation-text {
+    font-size: 1.2rem;
+    margin-bottom: 0;
+    text-align: left;
+    min-width: 180px;
 }
 
-/* 历史记录按钮样式 */
-section[data-testid="stSidebar"] .stButton button {
-    background-color: #e3f2fd;
-    color: rgb(40, 100, 245);
-    border: 1px solid #bbdefb;
-}
-
-section[data-testid="stSidebar"] .stButton button:hover {
-    background-color: rgb(40, 100, 245);
-    color: white;
-}
-
-section[data-testid="stSidebar"] .stButton button:active,
-section[data-testid="stSidebar"] .stButton button:focus {
-    background-color: rgb(40, 100, 245) !important;
-    color: white !important;
-}
-
-/* 清空历史按钮特殊样式 */
-section[data-testid="stSidebar"] .stButton button:contains("清空历史") {
-    background-color: #ffebee;
-    color: #d32f2f;
-    border: 1px solid #ffcdd2;
-}
-
-section[data-testid="stSidebar"] .stButton button:contains("清空历史"):hover {
-    background-color: #d32f2f;
-    color: white;
-}
-
-/* 单词显示样式 */
-.word-display {
-    font-size: 3rem;
-    font-weight: bold;
-    color: rgb(40, 100, 245);
+/* 固定页脚样式 */
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    padding: 1rem 0;
     text-align: center;
-    margin: 1rem 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    border-top: 1px solid #e9ecef;
+    z-index: 1000;
+    margin-top: 2rem;
 }
 
-/* 链接颜色 */
-a {
-    color: rgb(40, 100, 245) !important;
+/* 音频播放器样式 */
+.stAudio {
+    width: 200px !important;
+    min-width: 200px !important;
 }
 
-a:hover {
-    color: #1668a3 !important;
+/* 清空历史按钮样式 */
+.danger-button {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    font-weight: 600 !important;
 }
+
+.danger-button:hover {
+    background-color: #c82333 !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 返回按钮样式 */
+.back-button {
+    background-color: #6c757d !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    font-weight: 600 !important;
+    margin-bottom: 2rem !important;
+}
+
+.back-button:hover {
+    background-color: #545b62 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,7 +277,6 @@ def load_cache():
             with open(CACHE_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, Exception):
-            # 如果文件损坏，返回空字典，下次查询会重新爬取
             return {}
     return {}
 
@@ -219,16 +284,10 @@ def load_cache():
 def save_to_cache(word, data):
     """保存数据到缓存文件"""
     try:
-        # 加载现有缓存
         cache = load_cache()
-
-        # 更新缓存（使用小写单词作为key确保唯一性）
         cache[word.lower()] = data
-
-        # 保存回文件
         with open(CACHE_FILE, 'w', encoding='utf-8') as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
-
         return True
     except Exception:
         return False
@@ -248,77 +307,108 @@ def get_translator():
 
 translator = get_translator()
 
-# 初始化历史
+# 初始化状态
 if 'history' not in st.session_state:
     st.session_state.history = []
 if 'selected_word' not in st.session_state:
     st.session_state.selected_word = ""
 if 'auto_translate' not in st.session_state:
     st.session_state.auto_translate = False
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "main"  # "main" 或 "history"
 
-# 侧边栏查询历史
-with st.sidebar:
-    st.markdown("### 📚 查询历史")
 
-    if st.session_state.history:
-        recent_history = st.session_state.history
+def show_history_page():
+    """显示历史查询页面"""
+    st.markdown('<div class="history-page">', unsafe_allow_html=True)
 
-        # 显示最近查询的单词
-        for i, word in enumerate(reversed(recent_history), 1):
-            # 从缓存中获取该单词的数据
-            cached_result = get_from_cache(word)
-            first_translation = ""
+    # 按钮布局 - 并排展示
+    col1, col2, clo3 = st.columns([2, 6, 2])
 
-            # 如果有缓存数据，获取第一个中文翻译
-            if cached_result and 'definitions' in cached_result and cached_result['definitions']:
-                first_definition = cached_result['definitions'][0]
-                if 'chinese' in first_definition:
-                    first_translation = first_definition['chinese']
-                    # 如果翻译太长，截取前20个字符
-                    if len(first_translation) > 20:
-                        first_translation = first_translation[:20] + "..."
+    with col1:
+        # 返回按钮居左
+        if st.button("← 返回", key="back_to_main", use_container_width=True,
+                     type="secondary", help="返回翻译页面"):
+            st.session_state.current_page = "main"
+            st.rerun()
 
-            # 显示按钮，包含单词和第一个翻译
-            button_text = f"{word}"
-            if first_translation:
-                button_text += f" - {first_translation}"
+    with clo3:
+        # 清空历史按钮居右
+        if st.session_state.history and st.button("🗑️ 清空", key="clear_all_history",
+                                                  use_container_width=True, type="primary"):
+            st.session_state.history = []
+            st.rerun()
 
-            if st.button(button_text, key=f"history_{word}_{i}", use_container_width=True):
-                st.session_state.selected_word = word
-                st.session_state.auto_translate = True
-                st.rerun()
+    if not st.session_state.history:
+        st.markdown('''
+        <div class="history-empty">
+            <div class="history-empty-icon">📖</div>
+            <h3>暂无查询历史</h3>
+            <p>开始查询单词后，您的查询记录将显示在这里</p>
+        </div>
+        ''', unsafe_allow_html=True)
     else:
-        st.info("暂无查询历史")
+        # 显示历史记录
+        for word in reversed(st.session_state.history):
+            cached_result = get_from_cache(word)
+            if cached_result and 'error' not in cached_result:
+                # 创建历史记录卡片 - 添加点击区域样式
+                with st.container():
+                    # 显示第一个释义
+                    first_chinese = ""
+                    if cached_result.get('definitions'):
+                        first_def = cached_result['definitions'][0]
+                        if first_def.get('chinese'):
+                            first_chinese = first_def.get('chinese')
 
-    st.markdown("---")
-    if st.button("🗑️ 清空历史", use_container_width=True):
-        st.session_state.history = []
+                    # 使用HTML包装按钮文本实现居左
+                    button_label = f"{word} : {first_chinese}" if first_chinese else word
+                    st.markdown(f"""
+                    <style>
+                        div[data-testid="stButton"] button {{
+                            justify-content: flex-start !important;
+                            text-align: left !important;
+                            padding-left: 15px !important;
+                        }}
+                    </style>
+                    """, unsafe_allow_html=True)
+
+                    if st.button(button_label, key=f"history_query_{word}",
+                                 use_container_width=True,
+                                 help=f"查询 {word}"):
+                        st.session_state.selected_word = word
+                        st.session_state.auto_translate = True
+                        st.session_state.current_page = "main"
+                        st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def show_main_page():
+    """显示主翻译页面"""
+    # 主标题
+    st.markdown('<div class="main-header">单词王</div>', unsafe_allow_html=True)
+
+    word_input = st.text_input(
+        "输入英文单词或短语",
+        value=st.session_state.selected_word if st.session_state.selected_word else "",
+        placeholder="请默写",
+        label_visibility='hidden',
+        key="word_input"
+    )
+
+    if st.button("📚", key="view_history",
+                 help="查看查询历史"):
+        st.session_state.current_page = "history"
         st.rerun()
 
-# 使用容器控制主内容宽度
-main_container = st.container()
-
-with main_container:
-    # 主标题
-    st.markdown('<div class="main-header">📚 翻译器</div>', unsafe_allow_html=True)
-
-    # 搜索框
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        word_input = st.text_input(
-            "输入英文单词或短语",
-            value=st.session_state.selected_word if st.session_state.selected_word else "",
-            placeholder="例如: hello, computer, artificial intelligence",
-            label_visibility='hidden'
-        )
-
-    # 查询逻辑
+    # 查询逻辑 - 输入后按Enter自动查询
     should_translate = False
     word_to_translate = ""
 
     if word_input:
         should_translate = True
         word_to_translate = word_input
+
     elif st.session_state.auto_translate and st.session_state.selected_word:
         should_translate = True
         word_to_translate = st.session_state.selected_word
@@ -333,7 +423,7 @@ with main_container:
             source = "cache"
         else:
             with st.spinner(f"🔍 查询中: '{word_to_translate}'..."):
-                result = translator.translate(word_to_translate, max_definitions=5, include_audio=True)
+                result = translator.translate(word_to_translate, max_definitions=50, include_audio=True)
                 source = "crawler"
 
                 # 如果查询成功，保存到缓存
@@ -341,40 +431,43 @@ with main_container:
                     save_to_cache(word_to_translate, result)
 
         # 添加历史
-        if word_to_translate not in st.session_state.history:
+        if word_to_translate and word_to_translate not in st.session_state.history:
             st.session_state.history.append(word_to_translate)
 
         # 错误提示
         if 'error' in result:
             st.markdown(f'<div class="error-box">❌ {result["error"]}</div>', unsafe_allow_html=True)
         else:
-            # 单词 + 音标
-            st.markdown(f'<div class="word-display">{result["word"]}</div>', unsafe_allow_html=True)
+            # 音标和发音
             pron = result['pronunciation']
-            st.markdown(
-                f"<div class='pronunciation'>英式: /{' , /'.join(pron['uk'])}/   |   美式: /{' , /'.join(pron['us'])}/</div>",
-                unsafe_allow_html=True)
-
-            # 音频播放按钮（直接播放，无需重新请求）
-            # 音频播放（英式+美式一排显示）
             audios = result.get('audio_links', {})
-            if audios.get('uk_audio') or audios.get('us_audio'):
-                st.markdown('<div class="sub-header">🔊 发音:</div>', unsafe_allow_html=True)
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    if audios.get('uk_audio'):
-                        st.markdown("🇬🇧 英式")
-                        st.audio(audios['uk_audio'], format="audio/mp3")
-                with col2:
-                    if audios.get('us_audio'):
-                        st.markdown("🇺🇸 美式")
-                        st.audio(audios['us_audio'], format="audio/mp3")
+
+            # 英式发音行
+            if pron.get('uk'):
+                with st.container():
+                    col1, col2, col3 = st.columns([4, 3, 3])
+                    with col1:
+                        st.markdown(f'<div class="pronunciation-text">  🇬🇧 英式: /{" , /".join(pron["uk"])}/</div>',
+                                    unsafe_allow_html=True)
+                    with col2:
+                        if audios.get('uk_audio'):
+                            st.audio(audios['uk_audio'], format="audio/mp3")
+
+            # 美式发音行
+            if pron.get('us'):
+                with st.container():
+                    col1, col2, col3 = st.columns([4, 3, 3])
+                    with col1:
+                        st.markdown(f'<div class="pronunciation-text">  🇺🇸 美式: /{" , /".join(pron["us"])}/</div>',
+                                    unsafe_allow_html=True)
+                    with col2:
+                        if audios.get('us_audio'):
+                            st.audio(audios['us_audio'], format="audio/mp3")
 
             # 中文释义 + 词性 + 例句
             if result['definitions']:
-                st.markdown('<div class="sub-header">📖 释义&例句:</div>', unsafe_allow_html=True)
+                st.markdown('<div class="sub-header">📖 释义&例句</div>', unsafe_allow_html=True)
                 for d in result['definitions']:
-
                     with st.container(border=True):
                         if d.get('pos'):
                             st.markdown(f"**词性:** {d['pos']}")
@@ -393,32 +486,17 @@ with main_container:
             # 原词典链接
             st.markdown(f"[🔗 查看剑桥词典原始页面]({result['url']})")
 
-    # 使用示例
-    if not word_input:
-        st.markdown("")
-        st.markdown("**💡 使用示例**")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("hello", use_container_width=True, type="primary"):
-                st.session_state.selected_word = "hello"
-                st.session_state.auto_translate = True
-                st.rerun()
-        with col2:
-            if st.button("computer", use_container_width=True, type="primary"):
-                st.session_state.selected_word = "computer"
-                st.session_state.auto_translate = True
-                st.rerun()
-        with col3:
-            if st.button("artificial intelligence", use_container_width=True, type="primary"):
-                st.session_state.selected_word = "artificial intelligence"
-                st.session_state.auto_translate = True
-                st.rerun()
 
-    # 页脚信息
-    st.markdown("---")
-    st.markdown(
-        "<div style='text-align: center; color: #6c757d; font-size: 0.9rem;'>"
-        "基于剑桥词典的翻译工具 | 数据来源: dictionary.cambridge.org"
-        "</div>",
-        unsafe_allow_html=True
-    )
+# 主程序逻辑
+if st.session_state.current_page == "history":
+    show_history_page()
+else:
+    show_main_page()
+
+# 固定页脚
+st.markdown(
+    '<div class="fixed-footer">'
+    '基于剑桥词典的翻译工具 | 数据来源: dictionary.cambridge.org'
+    '</div>',
+    unsafe_allow_html=True
+)
