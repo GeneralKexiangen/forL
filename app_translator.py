@@ -445,11 +445,14 @@ def show_main_page():
             # 英式发音行
             if pron.get('uk'):
                 with st.container():
-                    col1, col2, col3 = st.columns([4, 3, 3])
+                    col1, col2, col3 = st.columns([5, 3, 2])
                     with col1:
                         # st.markdown(f'<div class="pronunciation-text">  🇬🇧 英式: /{" , /".join(pron["uk"])}/</div>',
                         #             unsafe_allow_html=True)
-                        st.subheader(f'🇬🇧 英: /{" , /".join(pron["uk"])}')
+                        # st.subheader(f'🇬🇧 英: /{" , /".join(pron["uk"])}')
+                        st.markdown(f'### 🇬🇧 英: /{" , /".join(pron["uk"])}/')
+
+                        # st.markdown(f'<h3>🇬🇧 英: /{" , /".join(pron["uk"])}/</h3>', unsafe_allow_html=True)
                     with col2:
                         if audios.get('uk_audio'):
                             st.audio(audios['uk_audio'], format="audio/mp3")
@@ -457,11 +460,14 @@ def show_main_page():
             # 美式发音行
             if pron.get('us'):
                 with st.container():
-                    col1, col2, col3 = st.columns([4, 3, 3])
+                    col1, col2, col3 = st.columns([5, 3, 2])
                     with col1:
                         # st.markdown(f'<div class="pronunciation-text">  🇺🇸 美式: /{" , /".join(pron["us"])}/</div>',
                         #             unsafe_allow_html=True)
-                        st.subheader(f'🇺🇸 美: /{" , /".join(pron["us"])}')
+                        # st.subheader(f'🇺🇸 美: /{" , /".join(pron["us"])}')
+                        st.markdown(f'### 🇺🇸 美: /{" , /".join(pron["us"])}/')
+                        # st.markdown(f'<h3>🇺🇸 美: /{" , /".join(pron["us"])}/</h3>', unsafe_allow_html=True)
+
                     with col2:
                         if audios.get('us_audio'):
                             st.audio(audios['us_audio'], format="audio/mp3")
@@ -502,4 +508,3 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
-
