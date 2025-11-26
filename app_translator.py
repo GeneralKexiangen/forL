@@ -449,7 +449,7 @@ def show_main_page():
                     with col1:
                         # st.markdown(f'<div class="pronunciation-text">  🇬🇧 英式: /{" , /".join(pron["uk"])}/</div>',
                         #             unsafe_allow_html=True)
-                        st.subheader(f'🇬🇧英: /{" , /".join(pron["uk"])}')
+                        st.subheader(f'🇬🇧 英: /{" , /".join(pron["uk"])}')
                     with col2:
                         if audios.get('uk_audio'):
                             st.audio(audios['uk_audio'], format="audio/mp3")
@@ -461,7 +461,7 @@ def show_main_page():
                     with col1:
                         # st.markdown(f'<div class="pronunciation-text">  🇺🇸 美式: /{" , /".join(pron["us"])}/</div>',
                         #             unsafe_allow_html=True)
-                        st.subheader(f'🇺🇸美: /{" , /".join(pron["us"])}')
+                        st.subheader(f'🇺🇸 美: /{" , /".join(pron["us"])}')
                     with col2:
                         if audios.get('us_audio'):
                             st.audio(audios['us_audio'], format="audio/mp3")
@@ -502,3 +502,4 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
+
