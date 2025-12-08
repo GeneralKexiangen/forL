@@ -8,10 +8,12 @@ from cambridge_translator import CambridgeTranslator
 import json
 import os
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import time    
 from streamlit import secrets
+from google.oauth2.service_account import Credentials
+import gspread
+
 
 # 页面配置 - 设置默认主题为light并隐藏设置
 st.set_page_config(
@@ -327,34 +329,38 @@ class GoogleSheetsCache:
             if not creds_dict:
                 print("未找到 Google 凭证，跳过连接。")
                 return None
-
+    
+            # 使用 google.oauth2 Credentials
             scopes = [
-                'https://www.googleapis.com/auth/spreadsheets',
-                'https://www.googleapis.com/auth/drive.file'
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive.file"
             ]
             credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            # credentials = Credentials.from_service_account_info(creds_dict)
+    
             client = gspread.authorize(credentials)
-
+    
             # 打开或创建 spreadsheet
             try:
                 spreadsheet = client.open("单词王缓存")
             except gspread.SpreadsheetNotFound:
                 spreadsheet = client.create("单词王缓存")
-                spreadsheet.share('', perm_type='anyone', role='reader')
-
+                # 必须共享，否则无法读写
+                spreadsheet.share(creds_dict["client_email"], perm_type="user", role="writer")
+    
             self.sheet = spreadsheet.sheet1
-
+    
             # 初始化表头
             if not self.sheet.get_all_values():
                 headers = ['word', 'data', 'timestamp', 'query_count', 'last_accessed']
                 self.sheet.append_row(headers)
-
+    
             self.connected = True
-
+            print("Google Sheets 连接成功")
+    
         except Exception as e:
             print("Google Sheets 连接失败:", e)
             self.connected = False
+
 
     def save(self, word, data):
         """保存缓存内容"""
