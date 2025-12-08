@@ -11,7 +11,8 @@ import gspread
 from datetime import datetime
 import time    
 from streamlit import secrets
-from google.oauth2.service_account import Credentials
+# from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 
 
@@ -318,11 +319,18 @@ class GoogleSheetsCache:
         try:
             # Streamlit Cloud secrets
             if hasattr(st, "secrets") and "gcp_service_account" in st.secrets:
-                creds = self._convert_attrdict_to_dict(st.secrets["gcp_service_account"])
+                def get_credentials_from_secrets():
+                    # 还原成 dict
+                    creds_dict = {key: value for key, value in st.secrets["gcp_service_account"].items()}
+                    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                    return creds_dict
+
+                creds = get_credentials_from_secrets()
+                # creds = self._convert_attrdict_to_dict(st.secrets["gcp_service_account"])
 
                 # 修复 private_key 换行符
-                if "private_key" in creds:
-                    creds["private_key"] = creds["private_key"].replace("\\n", "\n")
+                # if "private_key" in creds:
+                #     creds["private_key"] = creds["private_key"].replace("\\n", "\n")
 
                 return creds
 
@@ -348,17 +356,23 @@ class GoogleSheetsCache:
                 print("❌ 未找到 Google 凭证，无法连接 Sheets。")
                 return
 
+            
             scopes = [
                 "https://www.googleapis.com/auth/spreadsheets",
                 "https://www.googleapis.com/auth/drive.file",
             ]
 
-            credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            # credentials = Credentials.from_service_account_info(creds_dict)
-            client = gspread.authorize(credentials)
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(
+                            creds_dict,
+                            scopes=scopes
+                    )
+            client = gspread.authorize(creds)
+            
+            # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+            # client = gspread.authorize(credentials)
 
             try:
-                spreadsheet = client.open(self.sheet_name).sheet1
+                spreadsheet = client.open(self.sheet_name)
             except gspread.SpreadsheetNotFound:
                 # 创建新表
                 spreadsheet = client.create(self.sheet_name)
