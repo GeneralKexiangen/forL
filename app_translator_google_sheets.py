@@ -279,18 +279,6 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# Google Sheets 配置
-# GOOGLE_SHEET_NAME = "单词王缓存"  # 你的Google Sheet名称
-# GOOGLE_CREDENTIALS_FILE = "/Users/kehaigen/PycharmProjects/pythonProject/translation/sustained-spark-276707-166a3ff3144a.json"  # 从Google Cloud下载的服务账号JSON文件
-
-
-import os
-import json
-from datetime import datetime
-import gspread
-import streamlit as st
-from google.oauth2.service_account import Credentials
-
 
 class GoogleSheetsCache:
     """使用 Google Sheets 实现键值缓存（替代本地 JSON）"""
@@ -352,6 +340,7 @@ class GoogleSheetsCache:
     def _connect(self):
         try:
             creds_dict = self._get_credentials_dict()
+            st.write(creds_dict)
             if not creds_dict:
                 print("❌ 未找到 Google 凭证，无法连接 Sheets。")
                 return
