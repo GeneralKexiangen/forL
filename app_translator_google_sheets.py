@@ -355,6 +355,7 @@ class GoogleSheetsCache:
                             creds_dict,
                             scopes=scopes
                     )
+            st.write(creds)
             client = gspread.authorize(creds)
             
             # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
