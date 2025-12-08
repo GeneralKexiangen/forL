@@ -288,54 +288,51 @@ class GoogleSheetsCache:
         self.connected = False
         self._connect()
 
-    def _convert_attrdict_to_dict(self, obj):
-        """递归地将AttrDict转换为普通字典"""
-        if hasattr(obj, 'to_dict'):
-            return obj.to_dict()
-        elif isinstance(obj, dict):
-            return {k: self._convert_attrdict_to_dict(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._convert_attrdict_to_dict(item) for item in obj]
-        else:
-            return obj
-
     def _get_credentials_dict(self):
-        """获取凭证字典"""
+        """获取凭证字典（彻底修复 AttrDict 问题）"""
         try:
-            # 优先读取 Streamlit secrets
+            # Try Streamlit secrets
             if hasattr(st, "secrets"):
                 secrets_dict = st.secrets.to_dict()
-                if "gcp_service_account" in secrets_dict:
-                    creds_dict = self._convert_attrdict_to_dict(secrets_dict["gcp_service_account"])
 
-                    if "private_key" in creds_dict and isinstance(creds_dict["private_key"], str):
+                if "gcp_service_account" in secrets_dict:
+
+                    # ★★ 强制把 AttrDict 转为普通 dict（关键修复）
+                    creds_dict = json.loads(json.dumps(secrets_dict["gcp_service_account"]))
+
+                    # 修复 private_key
+                    if isinstance(creds_dict.get("private_key"), str):
                         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
-                    return {str(k): v for k, v in creds_dict.items()}
+                    return creds_dict
 
-            # 其次读取本地 credentials.json
+            # Try local credentials.json
             if os.path.exists("credentials.json"):
                 with open("credentials.json", "r") as f:
-                    return json.load(f)
+                    creds_dict = json.load(f)
+                    if isinstance(creds_dict.get("private_key"), str):
+                        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                    return creds_dict
 
             return None
 
-        except Exception:
+        except Exception as e:
+            print("Credential load error:", e)
             return None
 
     def _connect(self):
-        """连接到Google Sheets"""
+        """连接 Google Sheets"""
         try:
             creds_dict = self._get_credentials_dict()
             if not creds_dict:
+                print("未找到 Google 凭证，跳过连接。")
                 return None
 
             scopes = [
                 'https://www.googleapis.com/auth/spreadsheets',
                 'https://www.googleapis.com/auth/drive.file'
             ]
-            # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            credentials = Credentials.from_service_account_info(creds_dict)
+            credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
             client = gspread.authorize(credentials)
 
             # 打开或创建 spreadsheet
@@ -353,21 +350,21 @@ class GoogleSheetsCache:
                 self.sheet.append_row(headers)
 
             self.connected = True
-            return self.sheet
 
-        except Exception:
-            return None
+        except Exception as e:
+            print("Google Sheets 连接失败:", e)
+            self.connected = False
 
     def save(self, word, data):
-        """保存数据到Google Sheets"""
-        if not self.connected or not self.sheet:
+        """保存缓存内容"""
+        if not self.connected:
             return False
 
         try:
             word_lower = word.lower()
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            # 精简后的 JSON 内容（兼容原本的 translation_cache.json）
+            # 压缩 data（兼容 json 缓存结构）
             simplified_data = {
                 'word': word,
                 'url': data.get('url', ''),
@@ -378,7 +375,7 @@ class GoogleSheetsCache:
 
             data_json = json.dumps(simplified_data, ensure_ascii=False)
 
-            # 查找单词
+            # 查找是否已有记录
             try:
                 cell = self.sheet.find(word_lower)
                 if cell:
@@ -387,59 +384,54 @@ class GoogleSheetsCache:
                     self.sheet.update_cell(row, 3, timestamp)
                     self.sheet.update_cell(row, 5, timestamp)
 
-                    query_count = int(self.sheet.cell(row, 4).value or 0) + 1
-                    self.sheet.update_cell(row, 4, query_count)
+                    count = int(self.sheet.cell(row, 4).value or 0) + 1
+                    self.sheet.update_cell(row, 4, count)
                     return True
             except:
                 pass
 
-            # 插入新行
-            row_data = [word_lower, data_json, timestamp, 1, timestamp]
-            self.sheet.append_row(row_data)
+            # 新增
+            row = [word_lower, data_json, timestamp, 1, timestamp]
+            self.sheet.append_row(row)
 
             return True
 
-        except Exception:
+        except Exception as e:
+            print("save error:", e)
             return False
 
     def load(self, word):
-        """从Google Sheets加载数据"""
-        if not self.connected or not self.sheet:
+        """读取缓存"""
+        if not self.connected:
             return None
 
         try:
             word_lower = word.lower()
-
-            try:
-                cell = self.sheet.find(word_lower)
-                if not cell:
-                    return None
-
-                row = cell.row
-                data_json = self.sheet.cell(row, 2).value
-
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                self.sheet.update_cell(row, 5, timestamp)
-
-                query_count = int(self.sheet.cell(row, 4).value or 0) + 1
-                self.sheet.update_cell(row, 4, query_count)
-
-                return json.loads(data_json) if data_json else None
-
-            except:
+            cell = self.sheet.find(word_lower)
+            if not cell:
                 return None
 
-        except Exception:
+            row = cell.row
+            data_json = self.sheet.cell(row, 2).value
+
+            # 更新访问时间 & 次数
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.sheet.update_cell(row, 5, timestamp)
+            count = int(self.sheet.cell(row, 4).value or 0) + 1
+            self.sheet.update_cell(row, 4, count)
+
+            return json.loads(data_json) if data_json else None
+
+        except Exception as e:
+            print("load error:", e)
             return None
 
     def get_all_words(self):
-        """获取所有缓存的单词"""
-        if not self.connected or not self.sheet:
+        if not self.connected:
             return []
-
         try:
-            all_values = self.sheet.col_values(1)
-            return all_values[1:] if len(all_values) > 1 else []
+            values = self.sheet.col_values(1)
+            return values[1:] if len(values) > 1 else []
         except:
             return []
 
