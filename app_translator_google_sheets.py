@@ -283,161 +283,235 @@ GOOGLE_SHEET_NAME = "单词王缓存"  # 你的Google Sheet名称
 
 class GoogleSheetsCache:
     """Google Sheets缓存管理器"""
-
+    
     def __init__(self):
         self.sheet = None
         self._connect()
-
+    
+    def _get_credentials(self):
+        """从Streamlit Secrets或本地文件获取凭证"""
+        try:
+            # 首先尝试从Streamlit Secrets获取
+            if hasattr(st, 'secrets') and 'gcp_service_account' in st.secrets:
+                # 将AttrDict转换为普通字典
+                secrets_dict = st.secrets.to_dict()
+                gcp_config = secrets_dict.get('gcp_service_account', {})
+                
+                # 确保是字典类型
+                if not isinstance(gcp_config, dict):
+                    # 如果是AttrDict，转换为字典
+                    if hasattr(gcp_config, 'to_dict'):
+                        credentials_dict = gcp_config.to_dict()
+                    else:
+                        # 尝试直接转换
+                        credentials_dict = dict(gcp_config)
+                else:
+                    credentials_dict = gcp_config.copy()
+                
+                # 调试信息（可选）
+                # st.write("凭证字典键:", list(credentials_dict.keys()))
+                
+                # 清理private_key中的换行符
+                if 'private_key' in credentials_dict:
+                    private_key = credentials_dict['private_key']
+                    if isinstance(private_key, str):
+                        # 修复常见的换行符问题
+                        credentials_dict['private_key'] = private_key.replace('\\n', '\n')
+                
+                # 创建临时JSON文件
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                    json.dump(credentials_dict, f, ensure_ascii=False)
+                    temp_file = f.name
+                
+                # 从临时文件创建凭证
+                scope = [
+                    'https://spreadsheets.google.com/feeds',
+                    'https://www.googleapis.com/auth/drive'
+                ]
+                
+                try:
+                    credentials = ServiceAccountCredentials.from_json_keyfile_name(temp_file, scope)
+                except Exception as e:
+                    st.error(f"创建凭证失败: {str(e)}")
+                    # 尝试直接使用字典
+                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                
+                # 清理临时文件
+                try:
+                    os.unlink(temp_file)
+                except:
+                    pass
+                
+                return credentials
+            
+            # 如果Secrets不存在，尝试本地文件
+            elif os.path.exists('credentials.json'):
+                scope = [
+                    'https://spreadsheets.google.com/feeds',
+                    'https://www.googleapis.com/auth/drive'
+                ]
+                try:
+                    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+                    return credentials
+                except Exception as e:
+                    st.error(f"读取本地凭证失败: {str(e)}")
+                    return None
+            
+            else:
+                # st.warning("未找到Google服务账号凭证")
+                return None
+                
+        except Exception as e:
+            st.error(f"获取凭证失败: {str(e)}")
+            return None
+    
     def _connect(self):
         """连接到Google Sheets"""
         try:
-            # if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
-            #     st.warning(f"未找到Google服务账号凭证文件: {GOOGLE_CREDENTIALS_FILE}")
-            #     return None
-
-            # 定义权限范围
-            scope = [
-                'https://spreadsheets.google.com/feeds',
-                'https://www.googleapis.com/auth/drive'
-            ]
- 
-            # 从Streamlit Secrets加载凭证
-            credentials_dict = json.loads(secrets["gcp_service_account"])
-            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+            credentials = self._get_credentials()
+            if not credentials:
+                # st.info("未配置Google Sheets，将使用本地会话缓存")
+                return None
             
-            # credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            #     GOOGLE_CREDENTIALS_FILE, scope)
-
             # 授权
             gc = gspread.authorize(credentials)
-
-            # 打开或创建Sheet
+            
+            # 尝试打开Sheet
             try:
-                self.sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
+                self.sheet = gc.open("单词王缓存").sheet1
+                # 仅在调试时显示
+                # st.success("✅ 已连接到Google Sheets")
             except gspread.exceptions.SpreadsheetNotFound:
-                # 如果不存在，创建新的
-                spreadsheet = gc.create(GOOGLE_SHEET_NAME)
-                # 分享给所有人（可查看）
+                # 创建新的Sheet
+                spreadsheet = gc.create("单词王缓存")
+                # 设置为公开可读（可选）
                 spreadsheet.share('', perm_type='anyone', role='reader')
                 self.sheet = spreadsheet.sheet1
                 # 初始化表头
                 self._initialize_sheet()
-
+                # st.success("✅ 已创建新的Google Sheet")
+            except Exception as e:
+                # st.error(f"打开Sheet失败: {str(e)}")
+                return None
+            
             return self.sheet
-
+            
         except Exception as e:
-            st.error(f"连接Google Sheets失败: {str(e)}")
+            # st.error(f"连接Google Sheets失败: {str(e)}")
             return None
-
+    
     def _initialize_sheet(self):
         """初始化Sheet表头"""
-        headers = [
-            'word',  # 单词
-            'data',  # JSON数据
-            'timestamp',  # 时间戳
-            'query_count',  # 查询次数
-            'last_accessed'  # 最后访问时间
-        ]
-        self.sheet.append_row(headers)
-
+        try:
+            headers = [
+                'word',  # 单词
+                'data',  # JSON数据
+                'timestamp',  # 时间戳
+                'query_count',  # 查询次数
+                'last_accessed'  # 最后访问时间
+            ]
+            self.sheet.append_row(headers)
+        except Exception as e:
+            # st.error(f"初始化Sheet失败: {str(e)}")
+            pass
+    
     def save(self, word, data):
         """保存数据到Google Sheets"""
         try:
             if not self.sheet:
                 return False
-
+            
             word_lower = word.lower()
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            data_json = json.dumps(data, ensure_ascii=False)
-
+            
+            # 序列化数据
+            try:
+                data_json = json.dumps(data, ensure_ascii=False)
+            except Exception:
+                # 如果序列化失败，使用简化数据
+                simplified_data = {
+                    'word': word,
+                    'url': data.get('url', ''),
+                    'pronunciation': data.get('pronunciation', {}),
+                    'timestamp': timestamp
+                }
+                data_json = json.dumps(simplified_data, ensure_ascii=False)
+            
             # 查找是否已存在该单词
-            cell = self.sheet.find(word_lower, in_column=1)
-
-            if cell:
-                # 更新现有记录
-                row = cell.row
-                self.sheet.update_cell(row, 2, data_json)  # 更新数据
-                self.sheet.update_cell(row, 5, timestamp)  # 更新最后访问时间
-
-                # 增加查询计数
-                query_count = self.sheet.cell(row, 4).value
-                query_count = int(query_count) + 1 if query_count else 1
-                self.sheet.update_cell(row, 4, query_count)
-            else:
-                # 添加新记录
-                row_data = [word_lower, data_json, timestamp, 1, timestamp]
-                self.sheet.append_row(row_data)
-
+            try:
+                cell = self.sheet.find(word_lower)
+                if cell:
+                    # 更新现有记录
+                    row = cell.row
+                    self.sheet.update_cell(row, 2, data_json)
+                    self.sheet.update_cell(row, 3, timestamp)
+                    self.sheet.update_cell(row, 5, timestamp)
+                    
+                    # 增加查询计数
+                    try:
+                        query_count_cell = self.sheet.cell(row, 4).value
+                        query_count = int(query_count_cell) + 1 if query_count_cell else 1
+                        self.sheet.update_cell(row, 4, query_count)
+                    except:
+                        self.sheet.update_cell(row, 4, 1)
+                    return True
+            except gspread.exceptions.CellNotFound:
+                pass
+            
+            # 添加新记录
+            row_data = [word_lower, data_json, timestamp, 1, timestamp]
+            self.sheet.append_row(row_data)
             return True
-
+            
         except Exception as e:
-            st.error(f"保存到Google Sheets失败: {str(e)}")
+            # 静默失败，不显示错误
             return False
-
+    
     def load(self, word):
         """从Google Sheets加载数据"""
         try:
             if not self.sheet:
                 return None
-
+            
             word_lower = word.lower()
-            cell = self.sheet.find(word_lower, in_column=1)
-
-            if cell:
-                row = cell.row
-                data_json = self.sheet.cell(row, 2).value
-
-                if data_json:
-                    # 更新最后访问时间和查询计数
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    self.sheet.update_cell(row, 5, timestamp)
-
-                    query_count = self.sheet.cell(row, 4).value
-                    query_count = int(query_count) + 1 if query_count else 1
-                    self.sheet.update_cell(row, 4, query_count)
-
-                    return json.loads(data_json)
-
+            
+            try:
+                cell = self.sheet.find(word_lower)
+                if cell:
+                    row = cell.row
+                    data_json = self.sheet.cell(row, 2).value
+                    
+                    if data_json:
+                        # 更新最后访问时间和查询计数
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        self.sheet.update_cell(row, 5, timestamp)
+                        
+                        try:
+                            query_count_cell = self.sheet.cell(row, 4).value
+                            query_count = int(query_count_cell) + 1 if query_count_cell else 1
+                            self.sheet.update_cell(row, 4, query_count)
+                        except:
+                            self.sheet.update_cell(row, 4, 1)
+                        
+                        try:
+                            return json.loads(data_json)
+                        except json.JSONDecodeError:
+                            # 尝试修复JSON
+                            try:
+                                # 移除可能的无效字符
+                                import re
+                                cleaned_json = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', data_json)
+                                return json.loads(cleaned_json)
+                            except:
+                                return None
+            except gspread.exceptions.CellNotFound:
+                return None
+            
             return None
-
+            
         except Exception as e:
-            st.error(f"从Google Sheets加载失败: {str(e)}")
+            # 静默失败
             return None
-
-    def get_all_words(self):
-        """获取所有缓存的单词"""
-        try:
-            if not self.sheet:
-                return []
-
-            # 获取第一列的所有值（跳过表头）
-            words = self.sheet.col_values(1)
-            if len(words) > 1:
-                return words[1:]  # 跳过表头
-            return []
-
-        except Exception as e:
-            st.error(f"获取单词列表失败: {str(e)}")
-            return []
-
-    def clear_cache(self):
-        """清空缓存（保留表头）"""
-        try:
-            if not self.sheet:
-                return False
-
-            # 清除所有数据行（保留表头）
-            rows = self.sheet.get_all_values()
-            if len(rows) > 1:
-                # 删除除表头外的所有行
-                self.sheet.delete_rows(2, len(rows))
-
-            return True
-
-        except Exception as e:
-            st.error(f"清空缓存失败: {str(e)}")
-            return False
-
 
 # 创建Google Sheets缓存实例
 @st.cache_resource
