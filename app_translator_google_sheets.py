@@ -10,7 +10,8 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-import time
+import time    
+from streamlit import secrets
 
 # 页面配置 - 设置默认主题为light并隐藏设置
 st.set_page_config(
@@ -277,7 +278,7 @@ body {
 
 # Google Sheets 配置
 GOOGLE_SHEET_NAME = "单词王缓存"  # 你的Google Sheet名称
-GOOGLE_CREDENTIALS_FILE = "/Users/kehaigen/PycharmProjects/pythonProject/translation/sustained-spark-276707-166a3ff3144a.json"  # 从Google Cloud下载的服务账号JSON文件
+# GOOGLE_CREDENTIALS_FILE = "/Users/kehaigen/PycharmProjects/pythonProject/translation/sustained-spark-276707-166a3ff3144a.json"  # 从Google Cloud下载的服务账号JSON文件
 
 
 class GoogleSheetsCache:
@@ -290,19 +291,22 @@ class GoogleSheetsCache:
     def _connect(self):
         """连接到Google Sheets"""
         try:
-            if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
-                st.warning(f"未找到Google服务账号凭证文件: {GOOGLE_CREDENTIALS_FILE}")
-                return None
+            # if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
+            #     st.warning(f"未找到Google服务账号凭证文件: {GOOGLE_CREDENTIALS_FILE}")
+            #     return None
 
             # 定义权限范围
             scope = [
                 'https://spreadsheets.google.com/feeds',
                 'https://www.googleapis.com/auth/drive'
             ]
-
-            # 使用服务账号凭证
-            credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                GOOGLE_CREDENTIALS_FILE, scope)
+ 
+            # 从Streamlit Secrets加载凭证
+            credentials_dict = json.loads(secrets["gcp_service_account"])
+            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+            
+            # credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            #     GOOGLE_CREDENTIALS_FILE, scope)
 
             # 授权
             gc = gspread.authorize(credentials)
