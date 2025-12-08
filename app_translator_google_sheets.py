@@ -329,11 +329,11 @@ class GoogleSheetsCache:
                 return None
 
             scopes = [
-                'https://www.googleapis.com/auth/spreadsheets',
-                'https://www.googleapis.com/auth/drive.file'
+                'https://www.googleapis.com/auth/spreadsheets'
+                # 'https://www.googleapis.com/auth/drive.file'
             ]
-            # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            credentials = Credentials.from_service_account_info(creds_dict)
+            credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+            # credentials = Credentials.from_service_account_info(creds_dict)
             client = gspread.authorize(credentials)
 
             # 打开或创建 spreadsheet
