@@ -281,7 +281,7 @@ body {
 # GOOGLE_CREDENTIALS_FILE = "/Users/kehaigen/PycharmProjects/pythonProject/translation/sustained-spark-276707-166a3ff3144a.json"  # 从Google Cloud下载的服务账号JSON文件
 
 
-class SimpleGoogleSheetsCache:
+class GoogleSheetsCache:
     """简化的Google Sheets缓存管理器"""
     def __init__(self):
         self.sheet = None
