@@ -365,40 +365,53 @@ class GoogleSheetsCache:
             st.error(f"获取凭证失败: {str(e)}")
             return None
     
+    # 替代的_connect方法
     def _connect(self):
-        """连接到Google Sheets"""
+        """连接到Google Sheets（使用新版API）"""
         try:
-            credentials = self._get_credentials()
-            if not credentials:
-                # st.info("未配置Google Sheets，将使用本地会话缓存")
-                return None
+            import gspread
+            from google.oauth2.service_account import Credentials
             
-            # 授权
-            gc = gspread.authorize(credentials)
-            
-            # 尝试打开Sheet
-            try:
-                self.sheet = gc.open("单词王缓存").sheet1
-                # 仅在调试时显示
-                # st.success("✅ 已连接到Google Sheets")
-            except gspread.exceptions.SpreadsheetNotFound:
-                # 创建新的Sheet
-                spreadsheet = gc.create("单词王缓存")
-                # 设置为公开可读（可选）
-                spreadsheet.share('', perm_type='anyone', role='reader')
+            # 获取凭证信息
+            if hasattr(st, 'secrets') and 'gcp_service_account' in st.secrets:
+                # 转换为字典
+                secrets_data = st.secrets.to_dict()
+                creds_info = secrets_data['gcp_service_account']
+                
+                # 确保private_key格式正确
+                if isinstance(creds_info, dict) and 'private_key' in creds_info:
+                    creds_info['private_key'] = creds_info['private_key'].replace('\\n', '\n')
+                
+                # 创建凭证
+                scopes = [
+                    'https://www.googleapis.com/auth/spreadsheets',
+                    'https://www.googleapis.com/auth/drive.file'
+                ]
+                
+                creds = Credentials.from_service_account_info(creds_info, scopes=scopes)
+                client = gspread.authorize(creds)
+                
+                # 尝试打开或创建Sheet
+                try:
+                    spreadsheet = client.open("单词王缓存")
+                except gspread.SpreadsheetNotFound:
+                    spreadsheet = client.create("单词王缓存")
+                    # 分享给所有人（可选）
+                    spreadsheet.share('', perm_type='anyone', role='reader')
+                
                 self.sheet = spreadsheet.sheet1
-                # 初始化表头
-                self._initialize_sheet()
-                # st.success("✅ 已创建新的Google Sheet")
-            except Exception as e:
-                # st.error(f"打开Sheet失败: {str(e)}")
-                return None
-            
-            return self.sheet
+                
+                # 如果Sheet是空的，添加表头
+                if not self.sheet.get_all_values():
+                    self.sheet.append_row(['word', 'data', 'timestamp'])
+                
+                return True
+                
+            return False
             
         except Exception as e:
-            # st.error(f"连接Google Sheets失败: {str(e)}")
-            return None
+            # st.error(f"连接失败: {e}")
+            return False
     
     def _initialize_sheet(self):
         """初始化Sheet表头"""
