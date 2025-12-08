@@ -355,7 +355,6 @@ class GoogleSheetsCache:
                             creds_dict,
                             scopes=scopes
                     )
-            st.write(creds)
             client = gspread.authorize(creds)
             
             # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
@@ -382,6 +381,8 @@ class GoogleSheetsCache:
         except Exception as e:
             print("❌ Google Sheets 连接失败:", e)
             self.connected = False
+            st.warning("❌ Google Sheets 连接失败:")
+            st.warning(e)
 
     # --------------------------
     # 保存缓存
