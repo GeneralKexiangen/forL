@@ -350,7 +350,7 @@ class GoogleSheetsCache:
 
             scopes = [
                 "https://www.googleapis.com/auth/spreadsheets",
-                # "https://www.googleapis.com/auth/drive.file",
+                "https://www.googleapis.com/auth/drive.file",
             ]
 
             # credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
@@ -358,7 +358,7 @@ class GoogleSheetsCache:
             client = gspread.authorize(credentials)
 
             try:
-                spreadsheet = client.open(self.sheet_name)
+                spreadsheet = client.open(self.sheet_name).sheet1
             except gspread.SpreadsheetNotFound:
                 # 创建新表
                 spreadsheet = client.create(self.sheet_name)
