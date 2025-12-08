@@ -376,6 +376,7 @@ class GoogleSheetsCache:
 
             self.connected = True
             print("✅ Google Sheets 连接成功。")
+            st.success("✅ Google Sheets 连接成功。")
 
         except Exception as e:
             print("❌ Google Sheets 连接失败:", e)
