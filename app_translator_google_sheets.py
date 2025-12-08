@@ -471,7 +471,7 @@ class GoogleSheetsCache:
 
 
 # 创建Google Sheets缓存实例
-@st.cache_resource
+# @st.cache_resource
 def get_sheets_cache():
     return GoogleSheetsCache()
 
