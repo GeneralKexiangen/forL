@@ -410,7 +410,7 @@ class GoogleSheetsCache:
                 self.sheet.update_cell(row, 5, timestamp)
 
                 # 更新 query_count
-                count = int(self.sheet.cell(row, 4).value or 0) + 1
+                count = int(self.sheet.cell(row, 4).value or 0) 
                 self.sheet.update_cell(row, 4, count)
                 return True
 
@@ -602,7 +602,7 @@ def show_main_page():
                 # 如果查询成功，保存到Google Sheets
                 if 'error' not in result and cache_manager:
                     if cache_manager.save(word_to_translate, result):
-                        st.toast(f"✅ 已缓存到Google Sheets", icon="✅")
+                        st.toast(f"✅", icon="")
 
         # 添加历史
         if word_to_translate and word_to_translate not in st.session_state.history:
@@ -673,7 +673,7 @@ else:
 # 固定页脚
 st.markdown(
     '<div class="fixed-footer">'
-    '数据来源: dictionary.cambridge.org | 缓存存储: Google Sheets'
+    '数据来源: dictionary.cambridge.org'
     '</div>',
     unsafe_allow_html=True
 )
