@@ -340,7 +340,7 @@ class GoogleSheetsCache:
     def _connect(self):
         try:
             creds_dict = self._get_credentials_dict()
-            st.write(creds_dict)
+            # st.write(creds_dict)
             if not creds_dict:
                 print("❌ 未找到 Google 凭证，无法连接 Sheets。")
                 return
@@ -377,13 +377,10 @@ class GoogleSheetsCache:
 
             self.connected = True
             print("✅ Google Sheets 连接成功。")
-            st.success("✅ Google Sheets 连接成功。")
 
         except Exception as e:
             print("❌ Google Sheets 连接失败:", e)
             self.connected = False
-            st.warning("❌ Google Sheets 连接失败:")
-            st.warning(e)
 
     # --------------------------
     # 保存缓存
