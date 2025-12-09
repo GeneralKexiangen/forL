@@ -609,9 +609,9 @@ def show_main_page():
             st.session_state.history.append(word_to_translate)
 
         # 显示缓存来源提示
-        if should_translate:
-            with st.expander("ℹ️ 数据来源"):
-                st.info(f"数据来源: {source}")
+        # if should_translate:
+        #     with st.expander("ℹ️ 数据来源"):
+        #         st.info(f"数据来源: {source}")
 
         # 错误提示
         if 'error' in result:
