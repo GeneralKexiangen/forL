@@ -268,7 +268,7 @@ class CambridgeTranslator:
         # 剑桥词典发音页面
         resources['cambridge_pronunciation'] = f"https://dictionary.cambridge.org/pronunciation/english/{word.lower()}"
 
-        return resources
+        return {}
 
     def translate_sentence(self, text: str, include_audio: bool = True) -> Dict:
         """
@@ -514,3 +514,4 @@ class CambridgeTranslator:
 
 if __name__ == '__main__':
     print(CambridgeTranslator('5').translate_sentence('modest indulgence'))
+
