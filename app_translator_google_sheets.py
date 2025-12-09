@@ -602,7 +602,7 @@ def show_main_page():
                 # 如果查询成功，保存到Google Sheets
                 if 'error' not in result and cache_manager:
                     if cache_manager.save(word_to_translate, result):
-                        st.toast("✅")
+                        st.toast("✅ GET IT!")
 
         # 添加历史
         if word_to_translate and word_to_translate not in st.session_state.history:
