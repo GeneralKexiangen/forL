@@ -551,7 +551,7 @@ def show_main_page():
         key="word_input"
     )
 
-    if st.button("🔍", key="view_history",help="查看查询历史",width=40):
+    if st.button("🔍", key="view_history",help="查看查询历史"):
         st.session_state.current_page = "history"
         st.rerun()
 
