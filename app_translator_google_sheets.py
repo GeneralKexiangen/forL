@@ -289,18 +289,6 @@ class GoogleSheetsCache:
         self.connected = False
         self._connect()
 
-    # --------------------------
-    # 工具：确保 secrets / local json 读取正常
-    # --------------------------
-    def _convert_attrdict_to_dict(self, obj):
-        """递归将 AttrDict 转成普通 dict"""
-        if hasattr(obj, "to_dict"):
-            return obj.to_dict()
-        elif isinstance(obj, dict):
-            return {k: self._convert_attrdict_to_dict(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._convert_attrdict_to_dict(v) for v in obj]
-        return obj
 
     def _get_credentials_dict(self):
         """解析 GCP service_account 凭证"""
@@ -314,12 +302,6 @@ class GoogleSheetsCache:
                     return creds_dict
 
                 creds = get_credentials_from_secrets()
-                # creds = self._convert_attrdict_to_dict(st.secrets["gcp_service_account"])
-
-                # 修复 private_key 换行符
-                # if "private_key" in creds:
-                #     creds["private_key"] = creds["private_key"].replace("\\n", "\n")
-
                 return creds
 
             # 本地 credentials.json
@@ -569,8 +551,7 @@ def show_main_page():
         key="word_input"
     )
 
-    if st.button("📚", key="view_history",
-                 help="查看查询历史"):
+    if st.button("🔍", key="view_history",help="查看查询历史",width=40):
         st.session_state.current_page = "history"
         st.rerun()
 
@@ -602,16 +583,12 @@ def show_main_page():
                 # 如果查询成功，保存到Google Sheets
                 if 'error' not in result and cache_manager:
                     if cache_manager.save(word_to_translate, result):
-                        st.toast("✅ GET IT!")
+                        st.toast("✅ Get it!")
 
         # 添加历史
         if word_to_translate and word_to_translate not in st.session_state.history:
             st.session_state.history.append(word_to_translate)
 
-        # 显示缓存来源提示
-        # if should_translate:
-        #     with st.expander("ℹ️ 数据来源"):
-        #         st.info(f"数据来源: {source}")
 
         # 错误提示
         if 'error' in result:
@@ -624,7 +601,7 @@ def show_main_page():
             # 英式发音行
             if pron.get('uk'):
                 with st.container():
-                    col1, col2, col3 = st.columns([5, 3, 2])
+                    col1, col2, col3 = st.columns([5, 4, 1])
                     with col1:
                         st.markdown(f'### 🇬🇧 英: /{" , /".join(pron["uk"])}/')
                     with col2:
@@ -634,7 +611,7 @@ def show_main_page():
             # 美式发音行
             if pron.get('us'):
                 with st.container():
-                    col1, col2, col3 = st.columns([5, 3, 2])
+                    col1, col2, col3 = st.columns([5, 4, 1])
                     with col1:
                         st.markdown(f'### 🇺🇸 美: /{" , /".join(pron["us"])}/')
                     with col2:
