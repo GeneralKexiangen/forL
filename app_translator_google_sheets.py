@@ -483,7 +483,7 @@ if 'current_page' not in st.session_state:
 
 def show_history_page():
     """显示历史查询页面"""
-    col1, col2, clo3 = st.columns([1, 8, 1])
+    col1, col2, clo3 = st.columns([1.5, 7, 1.5])
 
     with col1:
         if st.button("← 返回", key="back_to_main", use_container_width=True,
